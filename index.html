@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Slide Buddy</title>
+    <style>
+        #dropzone {
+            border: 2px dashed #00000056;
+            padding: 100px;
+            text-align: center;
+            margin-bottom: 20px;
+            cursor: pointer;
+        }
+        #dropzone.dragover {
+            background-color: #2907073f;
+        }
+        h1, p, div {
+            font-family: 'Source Sans Pro', sans-serif;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <h1>Slide Buddy</h1>
+    <form id="uploadForm" enctype="multipart/form-data">
+        <div id="dropzone">
+            <p>Drag and drop an image here or click to select an image</p>
+            <input type="file" id="fileInput" name="image" accept="image/*" style="display: none;">
+        </div>
+        <button type="submit" style="display: none;"></button>
+    </form>
+    <div id="result">
+        <h2>Original Image:</h2>
+        <img id="originalImage" alt="Original Image">
+        <h2>Processed Image:</h2>
+        <img id="processedImage" alt="Processed Image">
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropzone = document.getElementById('dropzone');
+            const fileInput = document.getElementById('fileInput');
+            const uploadForm = document.getElementById('uploadForm');
+            const originalImage = document.getElementById('originalImage');
+            const processedImage = document.getElementById('processedImage');
+
+            // Prevent default drag and drop behavior
+            document.addEventListener('dragover', function(e) {
+                e.preventDefault();
+            });
+
+            document.addEventListener('drop', function(e) {
+                e.preventDefault();
+            });
+
+            // Handle drag and drop events
+            dropzone.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+
+            dropzone.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+
+            dropzone.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+
+                const file = e.dataTransfer.files[0];
+                processImage(file);
+            });
+
+            // Handle file input change event
+            fileInput.addEventListener('change', function() {
+                const file = this.files[0];
+                processImage(file);
+            });
+
+            // Trigger file input click when dropzone is clicked
+            dropzone.addEventListener('click', function() {
+                fileInput.click();
+            });
+
+            function processImage(file) {
+                if (file) {
+                    const formData = new FormData();
+                    formData.append('image', file);
+
+                    // Set the source of the original image
+                    const originalImageUrl = URL.createObjectURL(file);
+                    originalImage.src = originalImageUrl;
+
+                    fetch('http://localhost:5000/remove-background', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(function(response) {
+                        return response.blob();
+                    })
+                    .then(function(blob) {
+                        const processedImageUrl = URL.createObjectURL(blob);
+                        processedImage.src = processedImageUrl;
+                    })
+                    .catch(function(error) {
+                        console.error('Error:', error);
+                    });
+                }
+            }
+        });
+    </script>
+</body>
+</html>
